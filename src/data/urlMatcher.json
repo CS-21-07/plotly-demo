@@ -1,0 +1,14 @@
+{
+  "companies": [
+    {
+      "name": "F-5",
+      "company": "ffive",
+      "JsonUrl": "https://raw.githubusercontent.com/CS-21-07/jsonStorage/main/ffivestock.json"
+    },
+    {
+      "name": "Citrix",
+      "company": "citrix",
+      "JsonUrl": "https://raw.githubusercontent.com/CS-21-07/jsonStorage/main/citrixstock.json"
+    }
+  ]
+}
