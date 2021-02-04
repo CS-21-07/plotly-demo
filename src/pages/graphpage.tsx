@@ -1,9 +1,18 @@
 import React, { Component, useState, useEffect } from "react";
 import { RouteComponentProps } from "react-router-dom";
-import Plot from "react-plotly.js";
+// import Plot from "react-plotly.js";
 import * as companies from "../data/urlMatcher.json";
 import { Link } from "react-router-dom";
 import Select from "react-dropdown-select";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+// npm install react-datepicker --save
+import { Container, Row, Col } from "react-bootstrap";
+//npm install react-bootstrap bootstrap
+
+import Plotly from "plotly.js";
+import createPlotlyComponent from "react-plotly.js/factory";
+const Plot = createPlotlyComponent(Plotly);
 
 interface GraphPagePropsInterface
   extends RouteComponentProps<{ company: string; option: string }> {
@@ -30,6 +39,8 @@ const GraphPage: React.FC<GraphPagePropsInterface> = (
   const dailyValues: DailyExchange[] = [];
   let dailyValuesOrdinate: number[] = [];
   let dates: Date[] = [];
+  const defaultStartDate: Date = new Date(2000, 0, 0);
+  const defaultEndDate: Date = new Date();
 
   const [fetchUrl, setfetchUrl] = useState<any>();
   const [trigger, setTrigger] = useState<boolean>(true);
@@ -37,6 +48,9 @@ const GraphPage: React.FC<GraphPagePropsInterface> = (
   const [value, setValue] = useState<string>("Close");
   const [xx, setxx] = useState<Date[]>([]);
   const [yy, setyy] = useState<number[]>([]);
+  const [isVolume, SetIsVolume] = useState(value === "Volume");
+  const [startDate, setStartDate] = useState<Date>(defaultStartDate);
+  const [endDate, setEndDate] = useState<Date>(defaultEndDate);
 
   // const selectCompany = JSON.stringify(companies);
   // const selectCompanyArray: any[] = JSON.parse(selectCompany);
@@ -45,8 +59,6 @@ const GraphPage: React.FC<GraphPagePropsInterface> = (
   // );
   const fetching = companies.companies.find((comp) => comp.company === company)
     ?.JsonUrl;
-  // const fetching =
-  //   "https://raw.githubusercontent.com/CS-21-07/jsonStorage/main/citrixstock.json";
   console.log("we are fetching: " + fetching);
 
   const companyName = companies.companies.find(
@@ -58,10 +70,10 @@ const GraphPage: React.FC<GraphPagePropsInterface> = (
 
   useEffect(() => {
     setfetchUrl(fetching);
-    async function data(): Promise<any[]> {
-      const response = await fetch(fetchUrl)
+    async function data(toFetch: string): Promise<any[]> {
+      const response = await fetch(toFetch)
         .then(function (response: any) {
-          console.log("Successful fetch");
+          console.log("Successful fetch at " + toFetch);
           return response.json();
         })
         .catch((err) => {
@@ -69,12 +81,11 @@ const GraphPage: React.FC<GraphPagePropsInterface> = (
         });
       return Promise.resolve(response);
     }
-    data().then((response) => {
+    data(fetchUrl).then((response) => {
       const stockEvents: any[] = response;
       console.log(stockEvents?.length);
       console.log(stockEvents);
       for (let i: number = 0; i < stockEvents?.length; i++) {
-        // let obj: DailyExchange = stockEvents[i]; //extract(stockEvents[i]);
         let tempString: string = JSON.stringify(stockEvents[i]); //extract(stockEvents[i]);
         let obj = JSON.parse(tempString);
         let dailyExchangeObj: DailyExchange = {
@@ -90,12 +101,15 @@ const GraphPage: React.FC<GraphPagePropsInterface> = (
       populateGraphValue();
     });
     setValue(option);
-  }, [fetchUrl]);
+  }, [fetchUrl, startDate, endDate]);
 
   function populateGraphValue(): void {
     for (let i = 0; i < dailyValues.length; i++) {
-      manageOption(dailyValues[i]);
-      dates.push(toDateObject(dailyValues[i].date));
+      const tempDate = toDateObject(dailyValues[i].date);
+      if (tempDate >= startDate && tempDate <= endDate) {
+        manageOption(dailyValues[i]);
+        dates.push(tempDate);
+      }
     }
     setxx(dates);
     setyy(dailyValuesOrdinate);
@@ -114,6 +128,7 @@ const GraphPage: React.FC<GraphPagePropsInterface> = (
         break;
       case "volume":
         dailyValuesOrdinate.push(obj.volume);
+        SetIsVolume(true);
         break;
       case "open":
         dailyValuesOrdinate.push(obj.open);
@@ -159,34 +174,12 @@ const GraphPage: React.FC<GraphPagePropsInterface> = (
   const options = ["volume", "open", "close", "high", "low"];
 
   return (
-    <div style={{ alignItems: "center", margin: "12" }}>
-      {/* <button
-        className="btn btn-primary"
-        id="authorize_button"
-        onClick={handleAuthClick}
-        style={{
-          height: "100%",
-          justifyContent: "center",
-          alignSelf: "center",
-          display: "block",
-          float: "left",
-          margin: 30,
-        }}
-      >
-        display
-      </button> */}
-      <div>
+    <div style={{ alignItems: "center", margin: "12px" }}>
+      <div style={{ paddingBottom: "15px" }}>
         <Link to={"/home"} type="button">
           Go to Home
         </Link>
       </div>
-      {/* <div>
-        <Select
-          options={options}
-          values={options}
-          onChange={(values) => setValues(values)}
-        />
-      </div> */}
       <div>
         <label>
           Pick the chart to display:
@@ -199,13 +192,15 @@ const GraphPage: React.FC<GraphPagePropsInterface> = (
             <option value="Low">Low</option>
           </select>
         </label>
-        <a href={extension}>Visualize </a>
+        <a href={extension} style={{ paddingLeft: "8px" }}>
+          Visualize{" "}
+        </a>
         {/* <Link to={extension} type="button" className="btn btn-primary">
           Visualize
         </Link> */}
       </div>
       <div>
-        {trigger ? (
+        {!isVolume ? (
           <Plot
             data={[
               {
@@ -217,9 +212,67 @@ const GraphPage: React.FC<GraphPagePropsInterface> = (
                 // mode: "lines+markers",
                 mode: "lines",
                 marker: { color: "red" },
+                name: "Data",
               },
-              // { type: "bar", x: [1, 2, 3], y: [2, 5, 3] },
+              // ,
+              // {
+              //   x: [1, 2, 3, 7],
+              //   y: [2, 6, 3, 9],
+              //   type: "scatter",
+              //   // mode: "lines+markers",
+              //   mode: "lines",
+              //   marker: { color: "red" },
+              // },
             ]}
+            //onClick={window.alert("I clicked on a dot")}
+            legend={{
+              orientation: "h",
+              yanchor: "right",
+            }}
+            layout={{
+              showlegend: true,
+              width: 1000,
+              height: 600,
+              title: {
+                text: GraphTitle,
+                font: {
+                  size: 24,
+                },
+              },
+              grid: {
+                yside: "right plot",
+              },
+              xaxis: {
+                visible: true,
+                color: "#2c3e50",
+                title: {
+                  text: "Dates",
+                },
+              },
+              yaxis: {
+                visible: true,
+                color: "#2c3e50",
+                title: {
+                  text: "Values",
+                },
+              },
+            }}
+          />
+        ) : (
+          <div></div>
+        )}
+        {isVolume ? (
+          <Plot
+            data={[
+              {
+                x: xx,
+                y: yy,
+                type: "bar",
+                mode: "lines",
+                marker: { color: "red" },
+              },
+            ]}
+            //onClick={window.alert("I clicked on a dot")}
             layout={{
               width: 1000,
               height: 600,
@@ -227,9 +280,57 @@ const GraphPage: React.FC<GraphPagePropsInterface> = (
             }}
           />
         ) : (
-          <div>Error in loading the chart</div>
+          <div></div>
         )}
       </div>
+      {/* <div className="container">
+        <div className="row">
+          <div>
+            <div className="col-sm-12">
+              <h3> change start Date </h3>
+              <DatePicker
+                selected={startDate}
+                onChange={(date) => setStartDate(date)}
+              />
+            </div>
+            <div className="col-sm-12">
+              <h3> change End Date </h3>
+              <DatePicker
+                selected={endDate}
+                onChange={(date) => setEndDate(date)}
+              />
+            </div>
+          </div>
+        </div>
+      </div> */}
+      <Container fluid="md">
+        <Row>
+          <div>
+            <Col>
+              <div>
+                <h3> change start Date </h3>
+                <DatePicker
+                  selected={startDate}
+                  onChange={(date) => setStartDate(date)}
+                  showTimeSelect
+                  dateFormat="Pp"
+                />
+              </div>
+            </Col>
+            <Col>
+              <div>
+                <h3> change End Date </h3>
+                <DatePicker
+                  selected={endDate}
+                  onChange={(date) => setEndDate(date)}
+                  showTimeSelect
+                  dateFormat="Pp"
+                />
+              </div>
+            </Col>
+          </div>
+        </Row>
+      </Container>
     </div>
   );
 };

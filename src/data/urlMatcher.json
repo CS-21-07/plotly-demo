@@ -2,13 +2,27 @@
   "companies": [
     {
       "name": "F-5",
+      "id": "1",
       "company": "ffive",
       "JsonUrl": "https://raw.githubusercontent.com/CS-21-07/jsonStorage/main/ffivestock.json"
     },
     {
       "name": "Citrix",
+      "id": "2",
       "company": "citrix",
       "JsonUrl": "https://raw.githubusercontent.com/CS-21-07/jsonStorage/main/citrixstock.json"
+    },
+    {
+      "name": "Amazon",
+      "id": "3",
+      "company": "amazon",
+      "JsonUrl": "https://raw.githubusercontent.com/CS-21-07/jsonStorage/main/amazonstock.json"
+    },
+    {
+      "name": "Apple",
+      "id": "4",
+      "company": "apple",
+      "JsonUrl": "https://raw.githubusercontent.com/CS-21-07/jsonStorage/main/applestock.json"
     }
   ]
 }

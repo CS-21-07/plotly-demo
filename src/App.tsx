@@ -9,18 +9,43 @@ import {
   Switch,
   Redirect,
 } from "react-router-dom";
-import GraphPage from "./pages/graphpage";
+// import GraphPage from "./pages/graphpage";
 import HomePage from "./pages/HomePage";
 import PageNotFound from "./pages/NotFoundPage";
+import CombineGraph from "./pages/CombineGraphPage";
+import MultiTesting from "./pages/MultiTesting";
+import SingleGraph from "./classes/SingleGragh";
+import MultiGraph from "./classes/MultiGraph";
+import SelectedPoint from "./classes/SelectedPoint";
+import GraphPage from "./pages/graphpage";
+import XmlToJson from "./Extraction/XmlToJson";
 
-class App extends Component {
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    // Don't call this.setState() here!
+    this.state = { counter: 0 };
+  }
+
   render() {
     return (
       <Router>
         <Switch>
           <Route exact path="/" component={HomePage} />
           <Route exact path="/home" component={HomePage} />
+          <Route exact path="/multitest" component={MultiTesting} />
           <Route exact path="/visual/:company/:option" component={GraphPage} />
+          <Route exact path="/xmltojson" component={XmlToJson} />
+          <Route
+            exact
+            path="/visualMultiple/:company/:option"
+            component={MultiGraph}
+          />
+          <Route
+            exact
+            path="/PointInfo/:company/:dates"
+            component={SelectedPoint}
+          />
           <Route exact path="/404" component={PageNotFound} />
 
           <Redirect to="/404" />
